@@ -39,6 +39,12 @@ app.use(cors({
     credentials: true
 }));
 
+mongoose.connect(uri).then(() => {
+    console.log("connected")
+}).catch((e) => {
+    console.log("error", e)
+})
+
 const store = MongoStore.create({
     mongoUrl: uri,
     touchAfter: 24 * 60 * 60,
