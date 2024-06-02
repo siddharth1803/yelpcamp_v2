@@ -25,11 +25,7 @@ const userRoutes = require("./routes/users");
 const uri = `mongodb+srv://${process.env.ATLAS_USER}:${process.env.ATLAS_PASS}@cluster0.janse90.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/yelp-camp`;
 // const uri = "mongodb://localhost:27017/yelp-camp"
 
-mongoose.connect(uri).then(() => {
-    console.log("connected to db")
-}).catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
-})
+app.set('trust proxy', 1);
 
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", process.env.FE_URL);
@@ -44,13 +40,12 @@ app.use(cors({
 }));
 
 const store = MongoStore.create({
-    mongoUrl: uri,
+    mongoUrl: dbUrl,
     touchAfter: 24 * 60 * 60,
     crypto: {
         secret: process.env.SESSION_SECRET
     }
 });
-
 
 const sessionConfig = {
     store,
@@ -59,14 +54,16 @@ const sessionConfig = {
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: "None",
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7,
     }
 }
 
-app.use(helmet({ contentSecurityPolicy: false }))
+app.use(session(sessionConfig))
+
+// app.use(helmet({ contentSecurityPolicy: false }))
 app.use(session(sessionConfig));
 app.engine("ejs", ejsMate)
 app.set("view engine", "ejs")
