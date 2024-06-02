@@ -17,13 +17,16 @@ module.exports.register = async (req, res, next) => {
         const registeredUser = await User.register(user, password);
         req.login(registeredUser, (err) => {
             if (err)
-                res.status(400).json({ message: err })
+                return res.redirect(`${process.env.FE_URL}/register`);
+
+            // res.status(400).json({ message: err })
             // return next(err);
-            res.json({ success: true });
+            return res.redirect(`${process.env.FE_URL}`);
         })
     } catch (e) {
-        // req.flash('error', e.message);
-        res.status(500).json({ message: e.message })
+        return res.redirect(`${process.env.FE_URL}/register`);
+
+        // res.status(500).json({ message: e.message })
     }
 }
 
@@ -36,18 +39,18 @@ module.exports.login = async (req, res, next) => {
         }
         if (!user) {
             res.status(400)
-            // return res.redirect(`${process.env.FE_URL}/login`);
-            return res.status(400).json({ success: false, message: "incorrect credentials" })
+            return res.redirect(`${process.env.FE_URL}/login`);
+            // return res.status(400).json({ success: false, message: "incorrect credentials" })
         }
         req.login(user, err => {
             if (err) {
-                return res.status(400).json({ success: false, message: "incorrect credentials" })
+                // return res.status(400).json({ success: false, message: "incorrect credentials" })
                 // next(err);
-                // return res.redirect(`${process.env.FE_URL}/login`);
+                return res.redirect(`${process.env.FE_URL}/login`);
 
             }
-            return res.status(200).json({ success: true })
-            // return res.redirect(`${process.env.FE_URL}`);
+            // return res.status(200).json({ success: true })
+            return res.redirect(`${process.env.FE_URL}`);
         });
     })(req, res, next);
 }

@@ -13,7 +13,7 @@ export const UserProvider = ({ children }) => {
             headers: { "Content-Type": "application/json" }, withCredentials: true
         }).then((resp) => {
             if (resp.data.success) {
-                setUser({ email: resp.data.email, userId: resp.data.userId, username: resp.data.username, loggedIn: true, userType: resp.data.type })
+                setUser({ email: resp.data.email, userId: resp.data.userId, username: resp.data.username, loggedIn: true })
             }
         }).catch((error) => {
             console.log(error)

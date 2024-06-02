@@ -4,6 +4,7 @@ import UserContext from "./UserContext";
 
 export default function Navbar() {
     const { user } = useContext(UserContext);
+
     return (<>
         <nav className="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
             <div className="container-fluid">

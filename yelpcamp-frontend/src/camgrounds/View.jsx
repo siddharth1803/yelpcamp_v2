@@ -1,12 +1,15 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Rating } from "@mui/material";
 import Map, { Marker, NavigationControl } from 'react-map-gl';
 import mapboxgl from "mapbox-gl";
-
+import UserContext from "../components/UserContext";
 
 export default function ViewCamp() {
+    const { user } = useContext(UserContext)
+
+    const [loading, setLoading] = useState(false)
     const location = useLocation()
     const navigate = useNavigate()
     const queryParams = new URLSearchParams(location.search);
@@ -46,7 +49,6 @@ export default function ViewCamp() {
             }
         }).catch(error => {
             console.log(error)
-            // error && error.response && updateError(error.response.data.message)
         })
     }
 
@@ -64,7 +66,6 @@ export default function ViewCamp() {
             }
         }).catch(error => {
             console.log(error)
-            // error && error.response && updateError(error.response.data.message)
         })
     }
 
@@ -78,9 +79,11 @@ export default function ViewCamp() {
     }
 
     useEffect(() => {
+        setLoading(true)
         axios.get(`${import.meta.env.VITE_API_BASE_URL}/campgrounds/${id}`, {
         })
             .then((resp) => {
+                setLoading(false)
                 updateCampground(resp.data)
                 updateAllRatings(resp.data.reviews)
             }).catch((err) => {
@@ -89,7 +92,14 @@ export default function ViewCamp() {
             })
     }, [id])
     return (<>
-
+        {loading && (
+            <div className="m-5" >
+                <img
+                    src="https://i.giphy.com/dgZYnH2enJ1h6ZBoic.webp"
+                    style={{ display: "block", margin: "auto" }}
+                />
+            </div>
+        )}
         <div className="container row mt-2">
             <div className="col-6 ">
                 <div id="carouselExampleControls" className="carousel slide" data-bs-ride="carousel">
@@ -134,11 +144,11 @@ export default function ViewCamp() {
                         </li>
                         <li className="list-group-item"> ₹{campground.price}/night</li>
                     </ul>
-                    <div className="card-body">
+                    {user.loggedIn && campground.author && user.userId == campground.author._id && <div className="card-body">
                         <Link to={`/edit?id=${campground._id}`} className="card-link btn btn-info" >Edit</Link>
                         <button onClick={performDelete} className="btn btn-danger">Delete</button>
 
-                    </div>
+                    </div>}
                     <div className="card-footer text-muted">
                         2 days ago
                     </div>
@@ -146,7 +156,7 @@ export default function ViewCamp() {
             </div>
             <div className="col-6">
                 {campground.geometry && <Map
-                    mapboxAccessToken="pk.eyJ1Ijoic2lkZGhhcnRoMTgwMyIsImEiOiJjbHZxanB4MGwwaDgwMnFxejVycDNldzdnIn0.d1-MhE1_CRUvWpA5zqDqJQ"
+                    mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
                     initialViewState={{
                         longitude: campground.geometry.coordinates[0],
                         latitude: campground.geometry.coordinates[1],
@@ -155,41 +165,43 @@ export default function ViewCamp() {
                     }}
                     ref={mapRef}
                     style={{ width: 600, height: 400 }}
-                    mapStyle="mapbox://styles/mapbox/navigation-night-v1"
+                    mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
                     onClick={(e) => onClick(e, campground.geometry.coordinates[0], campground.geometry.coordinates[1])}
 
-                ><Marker longitude={campground.geometry.coordinates[0]} latitude={campground.geometry.coordinates[1]} anchor="bottom" >
-                        <img src="https://res.cloudinary.com/ddldfbxee/image/upload/v1717074182/YelpCamp/pointer_msnhml.svg" style={{ width: "30px", height: "30px" }} />
+                >
+                    <Marker
+                        longitude={campground.geometry.coordinates[0]} latitude={campground.geometry.coordinates[1]} anchor="bottom" >
+                        <img src="https://res.cloudinary.com/ddldfbxee/image/upload/v1717253478/YelpCamp/pointer_b27hac.svg"
+                            style={{ width: "30px", height: "30px" }} />
                     </Marker>
                     <NavigationControl />
                 </Map>}
 
-                <h2>Leave a Review</h2>
-                <form onSubmit={addComment} className="mb-3 needs-validation">
-                    <div>
-                        <label className="form-label" htmlFor="review">Rating</label><br />
-                        <Rating
-                            name="simple-controlled"
-                            value={rating}
-                            onChange={(event, newValue) => {
-                                setRating(newValue);
-                            }}
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label" htmlFor="body">Review</label>
-                        <textarea className="form-control" name="body" id="body" cols="30" rows="3"
-                            required value={body} onChange={(e) => updateBody(e.target.value)}></textarea>
-                        <div className="valid-feedback">
-                            Looks good!
+                {user.loggedIn && <><h2>Leave a Review</h2>
+                    <form onSubmit={addComment} className="mb-3 needs-validation">
+                        <div>
+                            <label className="form-label" htmlFor="review">Rating</label><br />
+                            <Rating
+                                name="simple-controlled"
+                                value={rating}
+                                onChange={(event, newValue) => {
+                                    setRating(newValue);
+                                }}
+                            />
                         </div>
-                    </div>
-                    <button className="btn btn-success">Submit</button>
-                </form>
+
+                        <div className="mb-3">
+                            <label className="form-label" htmlFor="body">Review</label>
+                            <textarea className="form-control" name="body" id="body" cols="30" rows="3"
+                                required value={body} onChange={(e) => updateBody(e.target.value)}></textarea>
+                            <div className="valid-feedback">
+                                Looks good!
+                            </div>
+                        </div>
+                        <button className="btn btn-success">Submit</button>
+                    </form></>}
 
                 {allRatings.map((review, index) => {
-                    console.log(review)
                     return (<div key={index}>
                         <div className="card mb-3 ">
                             <div className="card-body">
@@ -200,7 +212,9 @@ export default function ViewCamp() {
                                 </p>
                                 <p className="card-text">Review: {review.body}
                                 </p>
-                                <button onClick={(e) => deleteComment(e, review._id)} className="btn btn-sm btn-danger">Delete</button>
+                                {
+                                    user.loggedIn && user.userId == review.author._id && <button onClick={(e) => deleteComment(e, review._id)} className="btn btn-sm btn-danger">Delete</button>
+                                }
 
                             </div>
                         </div>

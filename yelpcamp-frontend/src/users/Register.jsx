@@ -45,11 +45,11 @@ export default function Register() {
                         <img src="https://images.unsplash.com/photo-1571863533956-01c88e79957e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1267&q=80"
                             alt="" className="card-img-top" />
                         <div className="card-body">
-                            {error && <div className="alert alert-danger" role="alert">
+                            {error && <div className="alert alert-danger alert-dismissible fade show" role="alert">
                                 {error}
                             </div>}
                             <h5 className="card-title">Register</h5>
-                            <form onSubmit={registerUser} className="needs-validation" noValidate>
+                            <form method="post" action={`${import.meta.env.VITE_API_BASE_URL}/register`} className="needs-validation" noValidate>
                                 <div className="mb-3">
                                     <label className="form-label" htmlFor="username">Username</label>
                                     <input className="form-control" type="text" id="username" name="username" required
@@ -76,8 +76,8 @@ export default function Register() {
                             </form>
                             {loading &&
                                 <>
-                                    <div class="spinner-grow" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                                    <div className="spinner-grow" role="status">
+                                        <span className="visually-hidden">Loading...</span>
                                     </div>
                                     <p>loading please wait...</p>
                                 </>

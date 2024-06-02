@@ -22,8 +22,9 @@ const cors = require("cors"); ``
 const campgroundRoutes = require("./routes/campgrounds")
 const reviewRoutes = require("./routes/reviews")
 const userRoutes = require("./routes/users");
-// const uri = `mongodb+srv://${process.env.ATLAS_USER}:${process.env.ATLAS_PASS}@cluster0.janse90.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/yelp-camp`;
-const uri = "mongodb://localhost:27017/yelp-camp"
+const uri = `mongodb+srv://${process.env.ATLAS_USER}:${process.env.ATLAS_PASS}@cluster0.janse90.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/yelp-camp`;
+// const uri = "mongodb://localhost:27017/yelp-camp"
+
 mongoose.connect(uri).then(() => {
     console.log("connected to db")
 }).catch((error) => {
@@ -58,7 +59,8 @@ const sessionConfig = {
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        // secure: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: "None",
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7,
     }
@@ -108,7 +110,6 @@ app.use((err, req, res, next) => {
     if (process.env.NODE_ENV == "production") {
         err.stack = ""
     }
-    console.log(statusCode)
 
     if (!err.message) err.message = 'Oh No, Something Went Wrong!'
     return res.status(statusCode).json({ success: false, error: err })

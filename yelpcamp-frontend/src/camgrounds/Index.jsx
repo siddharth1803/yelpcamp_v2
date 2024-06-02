@@ -6,8 +6,9 @@ import mapboxgl from "mapbox-gl";
 import { Map, Source, Layer, NavigationControl } from 'react-map-gl';
 
 export default function Index() {
+    const [loading, setLoading] = useState(false)
     const [campgrounds, updateCampgrounds] = useState([])
-    const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2lkZGhhcnRoMTgwMyIsImEiOiJjbHZxanB4MGwwaDgwMnFxejVycDNldzdnIn0.d1-MhE1_CRUvWpA5zqDqJQ';
+    const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
     const mapRef = useRef(null);
     const location = useLocation()
     const queryParams = new URLSearchParams(location.search);
@@ -53,23 +54,26 @@ export default function Index() {
         }
     };
 
-
     useEffect(() => {
+        setLoading(true)
         if (username) {
             axios.get(`${import.meta.env.VITE_API_BASE_URL}/campgrounds/getCampgroundsByUser/${username}`)
                 .then((resp) => {
+                    setLoading(false)
                     updateCampgrounds(resp.data)
                 }).catch((err) => {
-                    console.log(err)
+                    setLoading(false)
                     updateCampgrounds([])
                 })
         }
         else {
             axios.get(`${import.meta.env.VITE_API_BASE_URL}/campgrounds`)
                 .then((resp) => {
+                    setLoading(false)
+
                     updateCampgrounds(resp.data)
                 }).catch((err) => {
-                    console.log(err)
+                    setLoading(false)
                     updateCampgrounds([])
                 })
         }
@@ -85,7 +89,15 @@ export default function Index() {
     let pages = Array(Math.ceil(campgrounds.length / 10)).fill(0)
 
 
-    return (<div>
+    return (<>
+        {loading && (
+            <div className="m-5" style={{ backgroundColor: "black" }}>
+                <img
+                    src="https://gifdb.com/images/high/buffering-loading-please-wait-icon-thinking-man-xgqfxx8mjavh8fr2.webp"
+                    style={{ display: "block", margin: "auto" }}
+                />
+            </div>
+        )}
         <div style={{ height: "500px" }}>
             <Map
                 initialViewState={{
@@ -93,7 +105,7 @@ export default function Index() {
                     longitude: 79,
                     zoom: 3.4
                 }}
-                mapStyle="mapbox://styles/mapbox/dark-v9"
+                mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
                 mapboxAccessToken={MAPBOX_TOKEN}
                 interactiveLayerIds={[clusterLayer.id, unclusteredPointLayer.id]}
                 onClick={onClick}
@@ -165,5 +177,5 @@ export default function Index() {
                 </div>
             </div>
         </div>
-    </div>)
+    </>)
 }
