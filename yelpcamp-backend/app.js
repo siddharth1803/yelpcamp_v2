@@ -40,7 +40,7 @@ app.use(cors({
 }));
 
 const store = MongoStore.create({
-    mongoUrl: dbUrl,
+    mongoUrl: uri,
     touchAfter: 24 * 60 * 60,
     crypto: {
         secret: process.env.SESSION_SECRET
