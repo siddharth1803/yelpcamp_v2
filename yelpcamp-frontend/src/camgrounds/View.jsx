@@ -2,12 +2,12 @@ import axios from "axios";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Rating } from "@mui/material";
-import Map, { Marker, NavigationControl } from 'react-map-gl';
 import mapboxgl from "mapbox-gl";
 import UserContext from "../components/UserContext";
 
 export default function ViewCamp() {
     const { user } = useContext(UserContext)
+    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
     const [loading, setLoading] = useState(false)
     const location = useLocation()
@@ -17,8 +17,47 @@ export default function ViewCamp() {
     const [campground, updateCampground] = useState([])
     const [allRatings, updateAllRatings] = useState([])
     const [rating, setRating] = useState(0);
-    const mapRef = useRef(null);
+
     const [body, updateBody] = useState("")
+
+    const mapContainer = useRef(null);
+    const map = useRef(null);
+    const [lng, setLng] = useState(-70.9);
+    const [lat, setLat] = useState(42.35);
+    const [zoom, setZoom] = useState(8);
+    const marker = useRef(null);
+    const popup = useRef(null);
+
+    useEffect(() => {
+        if (map.current) return;
+        if (!mapContainer.current) return;
+
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/satellite-streets-v12',
+            center: [lng, lat],
+            zoom: zoom
+        });
+        const nav = new mapboxgl.NavigationControl();
+        map.current.addControl(nav, 'top-right');
+        popup.current = new mapboxgl.Popup({ offset: 25 })
+            .setHTML(
+                `<h5>${campground.title}</h5><p>${campground.location}</p>`
+            );
+
+        marker.current = new mapboxgl.Marker()
+            .setLngLat([lng, lat])
+            .setPopup(popup.current)
+            .addTo(map.current);
+
+        map.current.on('move', () => {
+            setLng(map.current.getCenter().lng.toFixed(4));
+            setLat(map.current.getCenter().lat.toFixed(4));
+            setZoom(map.current.getZoom().toFixed(2));
+        });
+    }, [mapContainer, lng, lat, zoom]);
+
+
 
     const performDelete = (e) => {
         axios.delete(`${import.meta.env.VITE_API_BASE_URL}/campgrounds/${id}`, {
@@ -69,14 +108,6 @@ export default function ViewCamp() {
         })
     }
 
-    const onClick = (e, lang, lat) => {
-        new mapboxgl.Popup()
-            .setLngLat([lang, lat])
-            .setHTML(
-                `<h5>${campground.title}</h5><p>${campground.location}</p>`
-            )
-            .addTo(mapRef.current.getMap());
-    }
 
     useEffect(() => {
         setLoading(true)
@@ -86,11 +117,15 @@ export default function ViewCamp() {
                 setLoading(false)
                 updateCampground(resp.data)
                 updateAllRatings(resp.data.reviews)
+                setLng(resp.data.geometry.coordinates[0]);
+                setLat(resp.data.geometry.coordinates[1]);
             }).catch((err) => {
                 console.log(err)
                 updateCampground([])
             })
     }, [id])
+
+
     return (<>
         {loading && (
             <div className="m-5" >
@@ -147,7 +182,6 @@ export default function ViewCamp() {
                     {user.loggedIn && campground.author && user.userId == campground.author._id && <div className="card-body">
                         <Link to={`/edit?id=${campground._id}`} className="card-link btn btn-info" >Edit</Link>
                         <button onClick={performDelete} className="btn btn-danger">Delete</button>
-
                     </div>}
                     <div className="card-footer text-muted">
                         2 days ago
@@ -155,27 +189,13 @@ export default function ViewCamp() {
                 </div>
             </div>
             <div className="col-6">
-                {campground.geometry && <Map
-                    mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-                    initialViewState={{
-                        longitude: campground.geometry.coordinates[0],
-                        latitude: campground.geometry.coordinates[1],
-                        zoom: 8,
 
-                    }}
-                    ref={mapRef}
-                    style={{ width: 600, height: 400 }}
-                    mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
-                    onClick={(e) => onClick(e, campground.geometry.coordinates[0], campground.geometry.coordinates[1])}
+                {
+                    campground.geometry &&
+                    <div ref={mapContainer} style={{ width: 600, height: 400 }} className="map-container" >
+                    </div>
+                }
 
-                >
-                    <Marker
-                        longitude={campground.geometry.coordinates[0]} latitude={campground.geometry.coordinates[1]} anchor="bottom" >
-                        <img src="https://res.cloudinary.com/ddldfbxee/image/upload/v1717253478/YelpCamp/pointer_b27hac.svg"
-                            style={{ width: "30px", height: "30px" }} />
-                    </Marker>
-                    <NavigationControl />
-                </Map>}
 
                 {user.loggedIn && <><h2>Leave a Review</h2>
                     <form onSubmit={addComment} className="mb-3 needs-validation">

@@ -6,9 +6,7 @@ const express = require("express");
 const app = express()
 const path = require("path")
 const mongoose = require("mongoose")
-const methodOverride = require('method-override');
 const morgan = require("morgan")
-const ejsMate = require("ejs-mate")
 const ExpressError = require('./utils/ExpressError');
 const session = require("express-session")
 const MongoStore = require("connect-mongo")
@@ -18,7 +16,7 @@ const LocalStratergy = require("passport-local")
 const User = require("./models/user")
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require("helmet")
-const cors = require("cors"); ``
+const cors = require("cors");
 const campgroundRoutes = require("./routes/campgrounds")
 const reviewRoutes = require("./routes/reviews")
 const userRoutes = require("./routes/users");
@@ -71,13 +69,8 @@ app.use(session(sessionConfig))
 
 // app.use(helmet({ contentSecurityPolicy: false }))
 app.use(session(sessionConfig));
-app.engine("ejs", ejsMate)
-app.set("view engine", "ejs")
-app.set("views", path.join(__dirname, "views"))
-app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(methodOverride('_method'));
 app.use(morgan("tiny"))
 
 app.use(passport.initialize())
@@ -96,7 +89,9 @@ app.use((req, res, next) => {
     next();
 })
 
-
+app.get("/", (req, res) => {
+    res.json({ success: true })
+})
 
 app.use("/", userRoutes)
 app.use("/campgrounds", campgroundRoutes)
