@@ -6,6 +6,7 @@ import mapboxgl from "mapbox-gl";
 export default function Index() {
     const [loading, setLoading] = useState(false);
     const [campgrounds, updateCampgrounds] = useState([]);
+    const [filteredCampgrounds, setFilteredCampgrounds] = useState([]);
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const username = queryParams.get("username");
@@ -24,9 +25,11 @@ export default function Index() {
                 .then((resp) => {
                     setLoading(false);
                     updateCampgrounds(resp.data);
+                    setFilteredCampgrounds(resp.data);
                 }).catch((err) => {
                     setLoading(false);
                     updateCampgrounds([]);
+                    setFilteredCampgrounds([]);
                 });
         }
         else {
@@ -34,22 +37,29 @@ export default function Index() {
                 .then((resp) => {
                     setLoading(false);
                     updateCampgrounds(resp.data);
+                    setFilteredCampgrounds(resp.data);
                 }).catch((err) => {
                     setLoading(false);
                     updateCampgrounds([]);
+                    setFilteredCampgrounds([]);
                 });
         }
     }, [username]);
 
+
     const searchAction = (e) => {
-        updateCampgrounds((prevVal) => {
-            return prevVal.filter((val) => {
-                return val.title.toLowerCase().search(e.target.value) !== -1;
-            });
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = campgrounds.filter((val) => {
+            return val.title.toLowerCase().includes(searchTerm)
+                || val.location.toLowerCase().includes(searchTerm)
+                || val.description.toLowerCase().includes(searchTerm);
         });
+        setFilteredCampgrounds(filtered);
     };
 
-    let pages = Array(Math.ceil(campgrounds.length / 10)).fill(0);
+
+    // let pages = Array(Math.ceil(campgrounds.length / 10)).fill(0);
+    let pages = Array(Math.ceil(filteredCampgrounds.length / 10)).fill(0);
 
     let mapContainer = useRef(null);
     let map = useRef(null);
@@ -69,7 +79,7 @@ export default function Index() {
                 if (!map.current.getSource('campgrounds')) {
                     map.current.addSource('campgrounds', {
                         type: 'geojson',
-                        data: { features: campgrounds },
+                        data: { features: filteredCampgrounds },
                         cluster: true,
                         clusterMaxZoom: 14,
                         clusterRadius: 50
@@ -179,10 +189,10 @@ export default function Index() {
         }
 
         if (map.current.getSource('campgrounds')) {
-            map.current.getSource('campgrounds').setData({ features: campgrounds });
+            map.current.getSource('campgrounds').setData({ features: filteredCampgrounds });
         }
 
-    }, [campgrounds]);
+    }, [filteredCampgrounds]);
 
     return (
         <>
@@ -201,7 +211,7 @@ export default function Index() {
                 <input type="text" className="form-control" onChange={searchAction} placeholder="Search For Campgrounds" name="query" />
             </div>
             <div>
-                {campgrounds.slice(start, start + 10).map((campground, index) => {
+                {filteredCampgrounds.slice(start, start + 10).map((campground, index) => {
                     return (
                         <div key={index} className="card mb-3">
                             <div className="row">
